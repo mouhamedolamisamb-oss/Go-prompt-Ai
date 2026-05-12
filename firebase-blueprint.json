@@ -1,0 +1,187 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "language": { "type": "string", "enum": ["fr", "en"] },
+        "promptLanguage": { "type": "string", "enum": ["fr", "en"] },
+        "isBlocked": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isAdmin": { "type": "boolean" },
+        "currentPlan": { "type": "string" },
+        "planLevel": { "type": "integer" },
+        "maxPlanLevel": { "type": "integer" },
+        "planActivatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "name", "language", "promptLanguage", "isBlocked", "createdAt"]
+    },
+    "PendingPlan": {
+      "title": "Pending Plan",
+      "description": "Plans scheduled for activation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "planName": { "type": "string" },
+        "promptCredits": { "type": "integer" },
+        "imageCredits": { "type": "integer" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "activated", "cancelled"] },
+        "createdByAdmin": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "planName", "promptCredits", "imageCredits", "scheduledAt", "status", "createdAt"]
+    },
+    "FeatureOverride": {
+      "title": "Feature Override",
+      "description": "Manual admin overrides for user features",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "featureName": { "type": "string" },
+        "isEnabled": { "type": "boolean" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "featureName", "isEnabled", "createdAt"]
+    },
+    "Notification": {
+      "title": "In-App Notification",
+      "description": "Messages for users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+    },
+    "PlanConfig": {
+      "title": "Plan Configuration",
+      "description": "Pricing and credit settings for plans",
+      "type": "object",
+      "properties": {
+        "planName": { "type": "string" },
+        "planLevel": { "type": "integer" },
+        "priceFcfa": { "type": "integer" },
+        "promptCredits": { "type": "integer" },
+        "imageCredits": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "isFeatured": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "UserCredits": {
+      "title": "User Credits",
+      "description": "Credits for prompt and image generation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "promptCredits": { "type": "integer" },
+        "imageCredits": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "promptCredits", "imageCredits", "updatedAt"]
+    },
+    "PromptHistory": {
+      "title": "Prompt History",
+      "description": "History of generated prompts",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "idea": { "type": "string" },
+        "generatedPrompt": { "type": "string" },
+        "mode": { "type": "string", "enum": ["standard", "ultra"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "idea", "generatedPrompt", "mode", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Credit Transaction",
+      "description": "Logs of credit recharges",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "planName": { "type": "string" },
+        "promptCreditsAdded": { "type": "integer" },
+        "imageCreditsAdded": { "type": "integer" },
+        "addedByAdmin": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userEmail", "planName", "promptCreditsAdded", "imageCreditsAdded", "createdAt"]
+    },
+    "SecurityLog": {
+      "title": "Security Log",
+      "description": "Audit of suspicious activities",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "action": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["action", "createdAt"]
+    },
+    "GlobalConfig": {
+      "title": "Global Config",
+      "description": "Application wide settings",
+      "type": "object",
+      "properties": {
+        "allowSignups": { "type": "boolean" },
+        "bannerText": { "type": "string" },
+        "maintenanceMode": { "type": "boolean" },
+        "signupBonusPrompts": { "type": "integer" },
+        "signupBonusImages": { "type": "integer" }
+      }
+    }
+  },
+  "firestore": {
+    "profiles/{userId}": {
+      "schema": "Profile",
+      "description": "User profiles"
+    },
+    "credits/{userId}": {
+      "schema": "UserCredits",
+      "description": "User credit balances"
+    },
+    "history/{historyId}": {
+      "schema": "PromptHistory",
+      "description": "Prompt generation history"
+    },
+    "transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Credit transactions"
+    },
+    "security_logs/{logId}": {
+      "schema": "SecurityLog",
+      "description": "Security audit logs"
+    },
+    "settings/global": {
+      "schema": "GlobalConfig",
+      "description": "Global application settings"
+    },
+    "notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "pending_plans/{planId}": {
+      "schema": "PendingPlan",
+      "description": "Plans waiting for activation"
+    },
+    "feature_overrides/{overrideId}": {
+      "schema": "FeatureOverride",
+      "description": "Admin manually enabled/disabled features"
+    },
+    "plan_configs/{planId}": {
+      "schema": "PlanConfig",
+      "description": "Global plan settings"
+    }
+  }
+}

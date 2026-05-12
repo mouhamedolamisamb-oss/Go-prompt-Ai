@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email in ['mouhamedolamisamb@gmail.com', 'kondedemba210@gmail.com'] ||
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.isAdmin == true
+      );
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /profiles/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if (isSignedIn() && request.auth.uid == userId && 
+                       !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['isAdmin', 'isBlocked', 'planLevel', 'maxPlanLevel', 'currentPlan'])) || 
+                    isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /credits/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      // Users can only create their initial credits matching global config or deduct credits. Admins can do anything.
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+                    request.resource.data.promptCredits == get(/databases/$(database)/documents/settings/global).data.signupBonusPrompts &&
+                    request.resource.data.imageCredits == get(/databases/$(database)/documents/settings/global).data.signupBonusImages;
+      allow update: if isAdmin() || (
+        isSignedIn() && request.auth.uid == userId &&
+        request.resource.data.promptCredits <= resource.data.promptCredits &&
+        request.resource.data.imageCredits <= resource.data.imageCredits &&
+        request.resource.data.userId == resource.data.userId
+      );
+    }
+
+    match /history/{id} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    match /transactions/{id} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    match /security_logs/{id} {
+       allow create: if true;
+       allow read: if isAdmin();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /notifications/{id} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, delete: if isAdmin();
+    }
+
+    match /pending_plans/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /feature_overrides/{userId} {
+      allow read: if isSignedIn() && (userId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /plan_configs/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

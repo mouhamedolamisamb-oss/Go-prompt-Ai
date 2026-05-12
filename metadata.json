@@ -1,0 +1,6 @@
+{
+  "name": "GoPrompt",
+  "description": "Plateforme SaaS de génération de prompts et d'images propulsée par Google Gemini.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
