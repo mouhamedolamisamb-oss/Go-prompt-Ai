@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { Ban } from 'lucide-react';
+import { useEffect } from 'react';
+import { doc, getDocFromServer } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -43,6 +46,21 @@ export default function App() {
   const { user, globalConfig } = useAuth();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  useEffect(() => {
+    async function testConnection() {
+      try {
+        // Try to fetch a known document directly from server to verify connection
+        await getDocFromServer(doc(db, 'settings', 'global'));
+        console.log("🔥 Firestore connected successfully");
+      } catch (error) {
+        if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('unavailable'))) {
+          console.error("❌ Firestore connection failed. Please check your configuration and internet connection.");
+        }
+      }
+    }
+    testConnection();
+  }, []);
 
   if (globalConfig?.maintenanceMode && !isAdminRoute) {
     return (

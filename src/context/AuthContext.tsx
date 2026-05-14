@@ -114,6 +114,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [configLoaded, authLoaded]);
 
+  // Safety timeout to prevent infinite black/loading screen
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("⚠️ Auth initialization timed out. Forcing ready state.");
+        setLoading(false);
+      }
+    }, 8000); // 8 seconds
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   const signOut = async () => {
     await firebaseSignOut(auth);
   };
@@ -134,7 +145,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{ user, profile, globalConfig, featureOverrides, loading, signOut, refreshProfile }}>
-      {!loading && children}
+      {loading ? (
+        <div className="min-h-screen bg-[#0a0a0b] flex flex-col items-center justify-center p-8 text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-500/10 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-500/20 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          <h2 className="mt-8 text-xl font-black text-white uppercase tracking-widest italic animate-pulse">GoPrompt</h2>
+          <p className="mt-4 text-gray-500 text-sm font-medium">Initialisation du système...</p>
+          
+          <div className="mt-12 flex flex-col gap-2 items-center">
+             <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 animate-[loading_2s_ease-in-out_infinite]"></div>
+             </div>
+             <p className="text-[10px] text-gray-700 font-black uppercase tracking-[0.3em]">Connexion sécurisée</p>
+          </div>
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 };

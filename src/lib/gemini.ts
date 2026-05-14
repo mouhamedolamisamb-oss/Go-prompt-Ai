@@ -1,8 +1,23 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Use a getter to handle missing API key gracefully without crashing on module load
+let genAI: GoogleGenAI | null = null;
+
+function getGenAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("❌ GEMINI_API_KEY is missing. Please set it in your environment variables.");
+      return null;
+    }
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+}
 
 export async function generateTextPrompt(idea: string, mode: 'standard' | 'ultra', language: string = 'fr') {
+  const ai = getGenAI();
+  if (!ai) throw new Error("Le service AI n'est pas configuré. Veuillez contacter l'administrateur.");
   const standardSystemPrompt = `Tu es GoPrompt, un générateur de prompts expert de niveau mondial.
 
 RÈGLE N°1 ABSOLUE : Tu retournes UNIQUEMENT le prompt final. 
@@ -91,6 +106,9 @@ export async function enrichImagePrompt(userIdea: string, quality: 'hd' | 'pro')
 
   const prompt = quality === 'pro' ? proPrompt : hdPrompt;
 
+  const ai = getGenAI();
+  if (!ai) throw new Error("Service AI non configuré.");
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -109,6 +127,9 @@ export async function generateImageFromText(prompt: string, quality: 'basic' | '
   if (quality !== 'basic') {
     finalPrompt = await enrichImagePrompt(prompt, quality === 'pro' ? 'pro' : 'hd');
   }
+
+  const ai = getGenAI();
+  if (!ai) throw new Error("Service AI non configuré.");
 
   try {
     const response = await ai.models.generateContent({
